@@ -13,10 +13,10 @@
             "envFile": "${workspaceFolder}/.env"
         },
         {
-            "name": "auth main",
+            "name": "main-auth",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/auth-main.py",
+            "program": "${workspaceFolder}/main-auth.py",
             "console": "integratedTerminal"
         }
     ]

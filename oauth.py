@@ -1,8 +1,10 @@
 """Simple OAuth 2.0 helper library."""
 
+import json
 import logging
 import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
 from queue import Queue
 from threading import Thread
 from time import sleep
@@ -11,6 +13,62 @@ from urllib.parse import parse_qs, urlparse
 from authlib.integrations.httpx_client import OAuth2Client
 
 logger = logging.getLogger(__name__)
+
+
+def auth_flow(
+    *, creds_path: Path, scope: list[str], auth_url: str, token_url: str
+) -> None:
+    """Authenticate with an OAuth 2.0 auth server using an authorization code flow.
+
+    Prompt the user for a client ID and client secret, then open a browser to
+    authenticate with the auth server. The resulting credentials will be stored
+    in the specified file.
+    """
+    creds = {}
+    if creds_path.exists():
+        creds = json.loads(creds_path.read_text())
+        print("There are already credentials stored.")
+        answer = input("Do you want to re-authorize? [y/N]: ")
+        if answer.lower() != "y":
+            return
+
+    existing_client_id = creds.get("client_id")
+    ci_prompt = "Enter your client ID" + (
+        f" [{existing_client_id}]: " if existing_client_id else ": "
+    )
+    client_id = input(ci_prompt) or existing_client_id
+
+    existing_client_secret = creds.get("client_secret")
+    cs_prompt = "Enter your client secret" + (
+        f" [{existing_client_secret}]: " if existing_client_secret else ":"
+    )
+    client_secret = input(cs_prompt) or existing_client_secret
+
+    redirect_uri = "http://localhost:8000"
+    response, state = authorize(
+        auth_url=auth_url,
+        client_id=client_id,
+        client_secret=client_secret,
+        scope=scope,
+        redirect_uri=redirect_uri,
+        access_type="offline",  # Also give a refresh token when giving access tokens.
+    )
+    token_response = fetch_token(
+        token_url=token_url,
+        client_id=client_id,
+        client_secret=client_secret,
+        redirect_uri=redirect_uri,
+        auth_response=response,
+        state=state,
+    )
+    creds = {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "access_token": token_response["access_token"],
+        "refresh_token": token_response["refresh_token"],
+    }
+    with creds_path.open("w") as creds_file:
+        creds_file.write(json.dumps(creds))
 
 
 def authorize(
@@ -121,6 +179,9 @@ class _AuthHTTPServer:
                 self.wfile.write(SUCCESS_HTML)
             logger.debug("Queueing %s", self.path)
             self.server.queue.put(self.path)  # type: ignore
+
+        def log_message(self, format: str, *args: str) -> None:
+            """Suppress logging of requests."""
 
     def __init__(self, url: str) -> None:
         """Initialize the server with the URL on which to expect redirects."""

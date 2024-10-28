@@ -15,6 +15,7 @@ class Config:
     update_data_time: str = env_field("UPDATE_DATA_TIME", "08:00")
 
     fitbit_creds: Path = config_path / "fitbit.json"
+    google_creds: Path = config_path / "google.json"
 
     db_token: str = env_field("INFLUXDB_TOKEN", "")
     db_url: str = env_field("INFLUXDB_URL", "http://localhost:8086")
