@@ -9,6 +9,7 @@ from httpx import HTTPStatusError
 from config import Config
 from database import Database
 from fitbit_api import get_spo2
+from utils import timestamp_to_utc
 
 logger = logging.getLogger(__name__)
 
@@ -67,13 +68,7 @@ def _store_spo2(timezone: str, db: Database, data: list[dict]) -> None:
     with db.batch() as batch:
         for day in data:
             for item in day["minutes"]:
-                timestamp = _timestamp_to_utc(item["minute"], zone_info)
+                timestamp = timestamp_to_utc(item["minute"], zone_info)
                 spo2 = item["value"]
                 batch.add_spo2_measurement(timestamp, spo2, source)
-    logger.info("Stored %d day(s) of SpO2 measurements from Fitbit.", len(data))
-
-
-def _timestamp_to_utc(timestamp: str, zone_info: ZoneInfo) -> datetime:
-    """Convert a local timestamp string to a datetime object in UTC."""
-    parsed = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
-    return parsed.replace(tzinfo=zone_info).astimezone(ZoneInfo("UTC"))
+    logger.info("Stored %d day(s) of SpO2 measurements from %s.", len(data), source)

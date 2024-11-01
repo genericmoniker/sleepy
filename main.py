@@ -4,6 +4,7 @@ import time
 import schedule
 
 import fitbit_data
+import po_data
 import log
 from config import Config
 from database import Database
@@ -32,7 +33,8 @@ def main() -> None:
 def update_data(config: Config) -> None:
     with Database(config) as db:
         fitbit_data.update(config, db)
-    # TODO: Update from other sources.
+        po_data.update(config, db)
+        # TODO: Update from other sources.
     logger.info("Data update complete.")
 
 

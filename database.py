@@ -80,10 +80,37 @@ class _Batch:
         self.write_api.__exit__(exc_type, exc_value, traceback)
         self._records.clear()
 
+    def add_pulse_measurement(
+        self, timestamp: datetime, pulse: int, source: str
+    ) -> None:
+        """Add a pending pulse rate measurements to the database.
+
+        Pulse rate is the number of heartbeats per minute, but measured at the periphery
+        of the body (usually the wrist or finger) instead of directly at the heart.
+
+        `timestamp` is a datetime object in UTC.
+        `pulse` is the pulse rate value as in beats per minute.
+        `source` is the source of the data.
+        """
+        point = (
+            Point("pulse")
+            .tag("source", source)
+            .field("pulse", pulse)
+            .time(timestamp, WritePrecision.S)
+        )
+        self._records.append(point)
+
     def add_spo2_measurement(
         self, timestamp: datetime, spo2: float, source: str
     ) -> None:
         """Add a pending SpO2 measurements to the database.
+
+        SpO2 stands for saturation peripheral oxygen. It is a measure of the amount of
+        oxygen-carrying hemoglobin in the blood relative to the amount of hemoglobin not
+        carrying oxygen, measured at the periphery of the body (usually the finger).
+
+        Normally, the SpO2 value is between 95 and 100 percent. Below 90 percent is
+        considered low.
 
         `timestamp` is a datetime object in UTC.
         `spo2` is the SpO2 value as a percentage (0.0-100.0).

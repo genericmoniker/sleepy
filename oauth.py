@@ -66,6 +66,8 @@ def auth_flow(
         "client_secret": client_secret,
         "access_token": token_response["access_token"],
         "refresh_token": token_response["refresh_token"],
+        "token_uri": token_url,
+        "scopes": scope,
     }
     with creds_path.open("w") as creds_file:
         creds_file.write(json.dumps(creds))
