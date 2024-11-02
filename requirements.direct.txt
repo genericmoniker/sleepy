@@ -1,0 +1,11 @@
+# These are direct requirements for the project.
+# The complete transitive closure of requirements is in requirements.txt.
+# With a clean .venv, you can install these with `pip install -r requirements.direct.txt`.
+# Then update requirements.txt with `pip freeze > requirements.txt`.
+
+Authlib
+google-api-python-client
+google-auth
+httpx
+influxdb-client
+schedule
